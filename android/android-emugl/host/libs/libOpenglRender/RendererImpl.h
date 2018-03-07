@@ -48,6 +48,7 @@ public:
     HardwareStrings getHardwareStrings() final;
     void setPostCallback(OnPostCallback onPost,
                                  void* context) final;
+    void setPostCommandBufferCallback(OnPostCommandBufferCallback onPost) final;
     bool asyncReadbackSupported() final;
     ReadPixelsCallback getReadPixelsCallback() final;
     bool showOpenGLSubwindow(FBNativeWindowType window,
@@ -74,6 +75,8 @@ public:
     bool load(android::base::Stream* stream,
               const android::snapshot::ITextureLoaderPtr& textureLoader) final;
     void fillGLESUsages(android_studio::EmulatorGLESUsages*) final;
+    void consumeRenderThreadBuffers(void* tInfo, void* stream, void* checksumCalc, void* readBuf, bool* waitFlag) final;
+
 private:
     DISALLOW_COPY_ASSIGN_AND_MOVE(RendererImpl);
 

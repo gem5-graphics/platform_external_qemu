@@ -28,7 +28,7 @@
 #include <string.h>
 
 // Set to 1 or 2 for debug traces
-#define DEBUG 0
+#define DEBUG 2
 
 #if DEBUG >= 1
 #define D(...) printf(__VA_ARGS__), printf("\n"), fflush(stdout)
@@ -252,10 +252,15 @@ public:
                 int spinCount = 20;
                 for (;;) {
                     auto result = mChannel->tryRead(&mDataForReading);
+                    //auto result = mChannel->readFromHost(&mDataForReading, true);
                     if (result == IoResult::Ok) {
+                        DD("%s: tryRead() succeeded", __func__);
                         mDataForReadingLeft = mDataForReading.size();
                         break;
+                    } else {
+                      //continue;
                     }
+
                     DD("%s: tryRead() failed with %d", __func__, (int)result);
                     // This failed either because the channel was stopped
                     // from the host, or if there was no data yet in the
@@ -295,6 +300,18 @@ public:
         }
 
         DD("%s: received %d bytes", __func__, (int)len);
+        //printf("%s: received %d bytes\n", __func__, (int)len);
+
+        /*int k =0;
+        auto bbuf = buffers;
+        while(bbuf->data){
+          printf("buffer %d, size %lu\n", k++, bbuf->size);
+          for(int c=0; c < bbuf->size; c++){
+            printf("%02x", 0xff & bbuf->data[c]);
+          }
+          printf("\n");
+          bbuf++;
+        }*/
         return len;
     }
 
@@ -324,8 +341,11 @@ public:
 
         D("%s: sending %d bytes to host", __func__, count);
         // Send it through the channel.
-        auto result = mChannel->tryWrite(std::move(outBuffer));
-        if (result != IoResult::Ok) {
+        //auto result = mChannel->tryWrite(std::move(outBuffer));
+        //if (result != IoResult::Ok) {
+
+        auto result = mChannel->writeToHost(std::move(outBuffer));
+        if (!result){
             D("%s: tryWrite() failed with %d", __func__, (int)result);
             return result == IoResult::Error ? PIPE_ERROR_IO : PIPE_ERROR_AGAIN;
         }

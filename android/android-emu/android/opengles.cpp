@@ -143,7 +143,10 @@ android_startOpenglesRenderer(int width, int height, bool guestPhoneApi, int gue
         return 0;
     }
 
-    android_init_opengl_logger();
+    sRenderLib->setRenderer(SELECTED_RENDERER_MESA);
+    sRenderLib->setAvdInfo(true, 25);
+
+    /*android_init_opengl_logger();
 
     sRenderLib->setRenderer(emuglConfig_get_current_renderer());
     sRenderLib->setAvdInfo(guestPhoneApi, guestApiLevel);
@@ -166,7 +169,7 @@ android_startOpenglesRenderer(int width, int height, bool guestPhoneApi, int gue
     dma_ops.get_host_addr = android_goldfish_dma_ops.get_host_addr;
     dma_ops.invalidate_host_mappings = android_goldfish_dma_ops.invalidate_host_mappings;
     dma_ops.unlock = android_goldfish_dma_ops.unlock;
-    sRenderLib->setDmaOps(dma_ops);
+    sRenderLib->setDmaOps(dma_ops);*/
 
     sRenderer = sRenderLib->initRenderer(width, height, sRendererUsesSubWindow, sEgl2egl);
     if (!sRenderer) {
@@ -323,8 +326,9 @@ android_redrawOpenglesWindow(void)
     }
 }
 
-const emugl::RendererPtr& android_getOpenglesRenderer() {
-    return sRenderer;
+const emugl::RendererPtr& android_getOpenglesRenderer()
+{
+  return sRenderer;
 }
 
 void android_cleanupProcGLObjects(uint64_t puid) {

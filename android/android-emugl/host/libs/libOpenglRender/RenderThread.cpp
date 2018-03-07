@@ -187,6 +187,92 @@ void RenderThread::setFinished() {
     }
 }
 
+void consumeBuffersExec(RenderThreadInfo* tInfo,
+                    ChannelStream* stream,
+                    ChecksumCalculator* checksumCalc,
+                    ReadBuffer* readBuf,
+                    bool* waitFlag,
+                    bool consumeAll){
+  bool progress;
+  do {
+    progress = false;
+
+    // try to process some of the command buffer using the GLESv1
+    // decoder
+    //
+    // DRIVER WORKAROUND:
+    // On Linux with NVIDIA GPU's at least, we need to avoid performing
+    // GLES ops while someone else holds the FrameBuffer write lock.
+    //
+    // To be more specific, on Linux with NVIDIA Quadro K2200 v361.xx,
+    // we get a segfault in the NVIDIA driver when glTexSubImage2D
+    // is called at the same time as glXMake(Context)Current.
+    //
+    // To fix, this driver workaround avoids calling
+    // any sort of GLES call when we are creating/destroying EGL
+    // contexts.
+    FrameBuffer::getFB()->lockContextStructureRead();
+    size_t last = tInfo->m_glDec.decode(
+        readBuf->buf(), readBuf->validData(), stream, checksumCalc);
+    if (last > 0) {
+      progress = true;
+      readBuf->consume(last);
+    }
+
+    //
+    // try to process some of the command buffer using the GLESv2
+    // decoder
+    //
+    last = tInfo->m_gl2Dec.decode(readBuf->buf(), readBuf->validData(),
+                                 stream, checksumCalc);
+    FrameBuffer::getFB()->unlockContextStructureRead();
+
+    if (last > 0) {
+      progress = true;
+      readBuf->consume(last);
+    }
+
+    //
+    // try to process some of the command buffer using the
+    // renderControl decoder
+    //
+    last = tInfo->m_rcDec.decode(readBuf->buf(), readBuf->validData(),
+                                stream, checksumCalc);
+    if (last > 0) {
+      readBuf->consume(last);
+      progress = true;
+    }
+
+    *waitFlag = progress;
+  } while (progress and consumeAll);
+}
+
+void consumeBuffers(RenderThreadInfo* tInfo,
+                    ChannelStream* stream,
+                    ChecksumCalculator* checksumCalc,
+                    ReadBuffer* readBuf,
+                    bool* waitFlag,
+                    bool consumeAll){
+  if(commandBufferCallBackFunc){
+    *waitFlag = true;
+    commandBufferCallBackFunc((void*) tInfo, (void*) stream, (void*) checksumCalc, (void*) readBuf, waitFlag);
+    return;
+  }
+
+  consumeBuffersExec(tInfo, stream, checksumCalc, readBuf, waitFlag, consumeAll);
+}
+
+void emuglConsumeRenderThreadBuffers(void* tInfo, void* stream, void* checksumCalc, void* readBuf, bool* waitFlag){
+  consumeBuffersExec((RenderThreadInfo*) tInfo,
+                 (ChannelStream*) stream,
+                 (ChecksumCalculator*) checksumCalc,
+                 (ReadBuffer*) readBuf,
+                 waitFlag,
+                 false);
+}
+
+OnPostCommandBufferCallback commandBufferCallBackFunc = 0;
+
 intptr_t RenderThread::main() {
     if (mFinished) {
         DBG("Error: fail loading a RenderThread @%p\n", this);
@@ -265,8 +351,14 @@ intptr_t RenderThread::main() {
         delete[] fname;
     }
 
+    bool waitFlag = false;
+
     while (1) {
         // Let's make sure we read enough data for at least some processing.
+        while(waitFlag) {
+          usleep(10);
+        }
+
         int packetSize;
         if (readBuf.validData() >= 8) {
             // We know that packet size is the second int32_t from the start.
@@ -327,56 +419,7 @@ intptr_t RenderThread::main() {
             fflush(dumpFP);
         }
 
-        bool progress;
-        do {
-            progress = false;
-
-            // try to process some of the command buffer using the GLESv1
-            // decoder
-            //
-            // DRIVER WORKAROUND:
-            // On Linux with NVIDIA GPU's at least, we need to avoid performing
-            // GLES ops while someone else holds the FrameBuffer write lock.
-            //
-            // To be more specific, on Linux with NVIDIA Quadro K2200 v361.xx,
-            // we get a segfault in the NVIDIA driver when glTexSubImage2D
-            // is called at the same time as glXMake(Context)Current.
-            //
-            // To fix, this driver workaround avoids calling
-            // any sort of GLES call when we are creating/destroying EGL
-            // contexts.
-            FrameBuffer::getFB()->lockContextStructureRead();
-            size_t last = tInfo.m_glDec.decode(
-                    readBuf.buf(), readBuf.validData(), &stream, &checksumCalc);
-            if (last > 0) {
-                progress = true;
-                readBuf.consume(last);
-            }
-
-            //
-            // try to process some of the command buffer using the GLESv2
-            // decoder
-            //
-            last = tInfo.m_gl2Dec.decode(readBuf.buf(), readBuf.validData(),
-                                         &stream, &checksumCalc);
-            FrameBuffer::getFB()->unlockContextStructureRead();
-
-            if (last > 0) {
-                progress = true;
-                readBuf.consume(last);
-            }
-
-            //
-            // try to process some of the command buffer using the
-            // renderControl decoder
-            //
-            last = tInfo.m_rcDec.decode(readBuf.buf(), readBuf.validData(),
-                                        &stream, &checksumCalc);
-            if (last > 0) {
-                readBuf.consume(last);
-                progress = true;
-            }
-        } while (progress);
+        consumeBuffers(&tInfo, &stream, &checksumCalc, &readBuf, &waitFlag, true);
     }
 
     if (dumpFP) {

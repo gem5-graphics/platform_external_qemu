@@ -28,6 +28,13 @@ namespace android_studio {
 
 namespace emugl {
 
+using OnPostCommandBufferCallback = void (*)(void* tInfo,
+                                           void* stream,
+                                           void* checksumCalc,
+                                           void* readBuf, 
+                                           bool* waitFlag);
+extern OnPostCommandBufferCallback commandBufferCallBackFunc;
+
 // Renderer - an object that manages a single OpenGL window used for drawing
 // and is able to create individual render channels for that window.
 //
@@ -88,6 +95,8 @@ public:
                                     int type,
                                     unsigned char* pixels);
     virtual void setPostCallback(OnPostCallback onPost, void* context) = 0;
+
+    virtual void setPostCommandBufferCallback(OnPostCommandBufferCallback onPost) = 0;
 
     // Async readback API
     virtual bool asyncReadbackSupported() = 0;
@@ -162,6 +171,8 @@ public:
 
     // Resumes all channels after snapshot saving or loading.
     virtual void resumeAll() = 0;
+    
+    virtual void consumeRenderThreadBuffers(void* tInfo, void* stream, void* checksumCalc, void* readBuf, bool* waitFlag) = 0;
 
     virtual void save(android::base::Stream* stream,
                       const android::snapshot::ITextureSaverPtr& textureSaver) = 0;

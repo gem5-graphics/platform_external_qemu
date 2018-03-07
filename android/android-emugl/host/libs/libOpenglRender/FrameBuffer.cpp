@@ -432,11 +432,14 @@ bool FrameBuffer::initialize(int width, int height, bool useSubWindow,
     //
     const bool has_gl_oes_image =
             emugl::hasExtension(gles2Extensions.get(), "GL_OES_EGL_image");
+
+    printf("gles2Extensions = %s\n", gles2Extensions.get());
     gles2Extensions.reset();
 
     fb->m_caps.has_eglimage_texture_2d = false;
     fb->m_caps.has_eglimage_renderbuffer = false;
     if (has_gl_oes_image) {
+        printf("has image\n");
         const char* const eglExtensions =
                 s_egl.eglQueryString(fb->m_eglDisplay, EGL_EXTENSIONS);
         if (eglExtensions != nullptr) {
@@ -445,6 +448,8 @@ bool FrameBuffer::initialize(int width, int height, bool useSubWindow,
             fb->m_caps.has_eglimage_renderbuffer =
                     emugl::hasExtension(eglExtensions, "EGL_KHR_gl_renderbuffer_image");
         }
+    } else {
+      printf("has no image\n");
     }
 
     //

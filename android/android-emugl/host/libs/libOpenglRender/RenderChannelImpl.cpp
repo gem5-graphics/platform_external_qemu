@@ -103,6 +103,34 @@ IoResult RenderChannelImpl::tryRead(Buffer* buffer) {
     return result;
 }
 
+bool RenderChannelImpl::writeToHost(Buffer&& buffer) {
+    D("buffer size=%d", (int)buffer.size());
+    AutoLock lock(mLock);
+    IoResult result = mFromGuest.pushLocked(std::move(buffer));
+    updateStateLocked();
+    D("mToHost.pushLocked() returned %d, state %d", (int)result, (int)mState);
+    notifyStateChangeLocked();
+    return result == IoResult::Ok;
+}
+
+IoResult RenderChannelImpl::readFromHost(Buffer* buffer, bool blocking) {
+    D("enter");
+    AutoLock lock(mLock);
+    IoResult result;
+    if (blocking) {
+        result = mToGuest.popLocked(buffer);
+    } else {
+        result = mToGuest.tryPopLocked(buffer);
+    }
+    updateStateLocked();
+    DD("mFromHost.%s() return %d, buffer size %d, state %d",
+       blocking ? "popLocked" : "tryPopLocked", (int)result,
+       (int)buffer->size(), (int)mState);
+    notifyStateChangeLocked();
+    return result;
+}
+
+
 void RenderChannelImpl::stop() {
     D("enter");
     AutoLock lock(mLock);

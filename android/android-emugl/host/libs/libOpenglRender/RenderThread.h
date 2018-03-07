@@ -30,6 +30,8 @@ class RenderChannelImpl;
 class RendererImpl;
 class ReadBuffer;
 
+void emuglConsumeRenderThreadBuffers(void* tInfo, void* stream, void* checksumCalc, void* readBuf, bool* waitFlag);
+
 // A class used to model a thread of the RenderServer. Each one of them
 // handles a single guest client / protocol byte stream.
 class RenderThread : public emugl::Thread {

@@ -25,7 +25,7 @@
 #define MIN_SWAP_INTERVAL 1
 #define MAX_SWAP_INTERVAL 10
 
-#define DEBUG_CHOOSE_CONFIG 0
+#define DEBUG_CHOOSE_CONFIG 1
 
 #if DEBUG_CHOOSE_CONFIG
 #include <stdio.h>

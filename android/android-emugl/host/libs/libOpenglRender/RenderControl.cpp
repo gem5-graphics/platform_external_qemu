@@ -428,8 +428,10 @@ static EGLint rcChooseConfig(EGLint *attribs,
         return 0;
     }
 
-    return fb->getConfigs()->chooseConfig(
+    EGLint retVal =  fb->getConfigs()->chooseConfig(
             attribs, (EGLint*)configs, (EGLint)configs_size);
+    printf("rcChooseConfig return value = %d\n", retVal);
+    return retVal;
 }
 
 static EGLint rcGetFBParam(EGLint param)

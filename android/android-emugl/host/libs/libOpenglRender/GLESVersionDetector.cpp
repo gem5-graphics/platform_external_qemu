@@ -129,6 +129,8 @@ GLESDispatchMaxVersion calcMaxVersionFromDispatch(EGLDisplay dpy) {
                      GLES_DISPATCH_MAX_VERSION_3_0);
     }
 
+    //maxVersion = GLES_DISPATCH_MAX_VERSION_3_0;
+
     int maj = 2; int min = 0;
     switch (maxVersion) {
         case GLES_DISPATCH_MAX_VERSION_2:

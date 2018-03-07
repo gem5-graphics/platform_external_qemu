@@ -256,6 +256,15 @@ FeatureControlImpl& FeatureControlImpl::get() {
 }
 
 bool FeatureControlImpl::isEnabled(Feature feature) const {
+    if(feature == android::featurecontrol::GLESDynamicVersion)
+      return true;
+    if(feature == android::featurecontrol::PlayStoreImage)
+      return true;
+    if(feature ==android::featurecontrol::GLPipeChecksum) 
+      return true;
+
+    return false;
+
     return mFeatures[feature].currentVal;
 }
 

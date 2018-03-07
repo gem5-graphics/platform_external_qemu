@@ -21,6 +21,7 @@
 #include "android/opengles.h"
 
 #include <functional>
+#include <fstream>
 
 // Standard values from Khronos.
 #define GL_RGBA 0x1908
@@ -47,8 +48,28 @@ static void onNewGpuFrame_guest(void* opaque, int width, int height,
     DCHECK(format == GL_RGBA);
     DCHECK(type == GL_UNSIGNED_BYTE);
 
-    GpuFrameBridge* bridge = reinterpret_cast<GpuFrameBridge*>(opaque);
-    bridge->postFrame(width, height, pixels);
+    static int fileNum = 0;
+    char* fileName;
+    char* cmd;
+    asprintf(&fileName, "%s.%d.rgba", "framebuffer", fileNum);
+    /*GpuFrameBridge* bridge = reinterpret_cast<GpuFrameBridge*>(opaque);
+    bridge->postFrame(width, height, pixels);*/
+
+    std::ofstream outfile(fileName, std::ofstream::binary);
+    outfile.write((char*)pixels, width*height*4);
+    outfile.close();
+    free(fileName);
+
+    //asprintf(&cmd, "convert -depth 8 -size 1080x1920 %s.%d.rgba %s.%d.png", "framebuffer", fileNum, "framebuffer", fileNum);
+    asprintf(&cmd, "convert -depth 8 -size 1080x1920 %s.%d.rgba %s.png", "framebuffer", fileNum, "framebuffer");
+    system(cmd);
+    free(cmd);
+
+    asprintf(&cmd, "rm %s.%d.rgba", "framebuffer", fileNum);
+    system(cmd);
+    free(cmd);
+
+    fileNum++;
 }
 
 // Recording (synchronous):
@@ -91,7 +112,7 @@ static void gpu_frame_set_post(bool on) {
     CHECK(sBridge);
 
     if (on) {
-        android_setPostCallback(choose_on_new_gpu_frame(), sBridge);
+        android_setPostCallback(choose_on_new_gpu_frame(), NULL); //sBridge);
     } else {
         android_setPostCallback(nullptr, nullptr);
     }

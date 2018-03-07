@@ -92,6 +92,9 @@ public:
     // Resume the normal operation after saving or loading a snapshot.
     void resume();
 
+    virtual bool writeToHost(Buffer&& buffer) override final;
+    virtual IoResult readFromHost(Buffer* buffer, bool blocking) override final;
+
 private:
     void updateStateLocked();
     void notifyStateChangeLocked();

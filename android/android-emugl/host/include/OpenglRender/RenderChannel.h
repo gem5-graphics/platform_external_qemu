@@ -111,6 +111,9 @@ public:
     // Callback function when snapshotting the virtual machine.
     virtual void onSave(android::base::Stream* stream) = 0;
 
+    virtual bool writeToHost(Buffer&& buffer) = 0;
+    virtual IoResult readFromHost(Buffer* buffer, bool blocking) = 0;
+
 protected:
     ~RenderChannel() = default;
 };

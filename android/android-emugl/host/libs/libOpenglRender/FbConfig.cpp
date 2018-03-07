@@ -162,6 +162,7 @@ FbConfigList::~FbConfigList() {
 int FbConfigList::chooseConfig(const EGLint* attribs,
                                EGLint* configs,
                                EGLint configsSize) const {
+  printf("calling chooseConfig\n");
     EGLint numHostConfigs = 0;
     if (!s_egl.eglGetConfigs(mDisplay, NULL, 0, &numHostConfigs)) {
         E("%s: Could not get number of host EGL configs\n", __FUNCTION__);

@@ -247,6 +247,7 @@ void doCompressedTexImage2D(GLEScontext* ctx, GLenum target, GLint level,
         SET_ERROR_IF((compressedSize != imageSize), GL_INVALID_VALUE);
 
         bool emulateCompressedData = false;
+        //if (!data or true) {
         if (!data) {
             emulateCompressedData = true;
             data = new char[compressedSize];

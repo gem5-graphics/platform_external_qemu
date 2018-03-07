@@ -319,6 +319,10 @@ RendererImpl::getReadPixelsCallback() {
     return mRenderWindow->getReadPixelsCallback();
 }
 
+void RendererImpl::setPostCommandBufferCallback(OnPostCommandBufferCallback onPost){
+  commandBufferCallBackFunc = onPost;
+}
+
 bool RendererImpl::showOpenGLSubwindow(FBNativeWindowType window,
                                        int wx,
                                        int wy,
@@ -356,6 +360,11 @@ void RendererImpl::repaintOpenGLDisplay() {
 
 void RendererImpl::cleanupProcGLObjects(uint64_t puid) {
     mCleanupThread->cleanup(puid);
+}
+
+void RendererImpl::consumeRenderThreadBuffers(void* tInfo, void* stream, void* checksumCalc, void* readBuf, bool* waitFlag){
+  printf("consume buffer called\n");
+  emuglConsumeRenderThreadBuffers(tInfo, stream, checksumCalc, readBuf, waitFlag);
 }
 
 }  // namespace emugl
